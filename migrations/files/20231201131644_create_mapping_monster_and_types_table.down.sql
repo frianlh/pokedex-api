@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.mapping_monster_and_types;

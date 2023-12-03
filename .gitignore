@@ -1,0 +1,17 @@
+# visual studio code
+.vscode
+
+# jetbrain
+.idea
+
+.DS_Store
+
+# test report files
+coverage.out
+coverage.html
+
+# environment variables
+.env
+
+# images data
+/images/*

@@ -1,0 +1,69 @@
+version: "2.8"
+services:
+  pokedex_api:
+    container_name: pokedex_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pokedex_api"
+    environment:
+      - APP_NAME=${APP_NAME}
+      - APP_ENV=${APP_ENV}
+      - APP_MODE=${APP_MODE}
+      - HOST_API=${HOST_API}
+      - PORT_API=${PORT_API}
+      - BASE_URL=${BASE_URL}
+      - POSTGRES_DB_HOST=pokedex_db
+      - POSTGRES_DB_PORT=5432
+      - POSTGRES_DB_USER=${POSTGRES_DB_USER}
+      - POSTGRES_DB_PASSWORD=${POSTGRES_DB_PASSWORD}
+      - POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
+      - POSTGRES_DB_MAX_OPEN_CONN=${POSTGRES_DB_MAX_OPEN_CONN}
+      - POSTGRES_DB_MAX_IDLE_CONN=${POSTGRES_DB_MAX_IDLE_CONN}
+      - MIGRATION_PATH=${MIGRATION_PATH}
+      - JWT_KEY=${JWT_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - pokedex_db
+      - pokedex_migrate
+    restart: always
+    command: [ "/app/main" ]
+    volumes:
+      - ./images/:/app/images
+    networks:
+      - pokedex_network
+
+  pokedex_db:
+    container_name: pokedex_db
+    image: postgres:15.5-alpine3.18
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_DB_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
+    volumes:
+      - "pokedex_volume:/var/lib/postgresql/data/"
+    networks:
+      - pokedex_network
+
+  pokedex_migrate:
+    container_name: pokedex_migrate
+    environment:
+      POSTGRES_DB_URL: postgres://${POSTGRES_DB_USER}:${POSTGRES_DB_PASSWORD}@pokedex_db:${POSTGRES_DB_PORT}/${POSTGRES_DB_NAME}?sslmode=disable
+    build:
+      context: .
+      dockerfile: migrations/Dockerfile
+    depends_on:
+      - pokedex_db
+    restart: on-failure
+    networks:
+      - pokedex_network
+
+volumes:
+  pokedex_volume:
+
+networks:
+  pokedex_network:
+    driver: bridge

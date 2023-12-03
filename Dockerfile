@@ -1,0 +1,42 @@
+# Builder
+FROM golang:1.21.3-alpine3.18 AS builder
+
+ENV APP_NAME=${APP_NAME}
+ENV APP_ENV=${APP_ENV}
+ENV APP_MODE=${APP_MODE}
+ENV HOST_API=${HOST_API}
+ENV PORT_API=${PORT_API}
+ENV BASE_URL=${BASE_URL}
+ENV POSTGRES_DB_HOST=${POSTGRES_DB_HOST}
+ENV POSTGRES_DB_PORT ${POSTGRES_DB_PORT}
+ENV POSTGRES_DB_USER=${POSTGRES_DB_USER}
+ENV POSTGRES_DB_PASSWORD=${POSTGRES_DB_PASSWORD}
+ENV POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
+ENV POSTGRES_DB_MAX_OPEN_CONN=${POSTGRES_DB_MAX_OPEN_CONN}
+ENV POSTGRES_DB_MAX_IDLE_CONN=${POSTGRES_DB_MAX_IDLE_CONN}
+ENV MIGRATION_PATH=${MIGRATION_PATH}
+ENV JWT_KEY=${JWT_KEY}
+
+RUN apk update && apk upgrade && \
+    apk --update add git make
+
+WORKDIR /app
+
+COPY . .
+#COPY .env.dev .env
+
+RUN go build -o main app/*.go
+
+# Distribution
+FROM alpine:latest
+
+RUN apk update && apk upgrade && \
+    apk --update --no-cache add tzdata
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+
+EXPOSE 3000
+
+CMD /app
